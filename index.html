@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title></title>
+  <title>Location Capture</title>
+
+  <!-- Supabase v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     body {
       margin: 0;
@@ -29,39 +32,46 @@
       font-family: Arial, sans-serif;
       font-size: 14px;
       color: #333;
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.95);
       padding: 8px 12px;
       border-radius: 6px;
     }
   </style>
 </head>
 <body>
+
   <img src="https://neostuffs.com/wp-content/uploads/2016/05/rastra.jpg" alt="Rastra" />
-  <div id="msg">Requesting location...</div>
+  <div id="msg">Waiting for location permission...</div>
 
   <script>
-    const supabaseUrl = 'https://jjpttsmpkscrvivzowdo.supabase.co';
-    const supabaseKey = 'sb_publishable_nbsygrIo_n-UTUNnEV5wBA_ndx8V_sF';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
     const msg = document.getElementById('msg');
 
-    async function saveLocation(position) {
-      try {
-        const { error } = await supabase.from('locations').insert({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          created_at: new Date().toISOString()
-        });
+    // IMPORTANT: must be https or localhost or browser will NOT prompt
+    const supabaseUrl = 'https://jjpttsmpkscrvivzowdo.supabase.co';
+    const supabaseKey = 'sb_publishable_nbsygrIo_n-UTUNnEV5wBA_ndx8V_sF';
 
-        if (error) {
-          msg.textContent = 'Supabase error: ' + error.message;
-        } else {
-          msg.textContent = 'Location saved successfully';
-        }
-      } catch (e) {
-        msg.textContent = 'Error saving location';
-      }
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    function saveLocation(position) {
+      const payload = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        created_at: new Date().toISOString()
+      };
+
+      supabase.from('locations').insert(payload)
+        .then(({ error }) => {
+          if (error) {
+            msg.textContent = 'Supabase error: ' + error.message;
+          } else {
+            msg.textContent = 'Location saved successfully';
+          }
+        });
+    }
+
+    function errorHandler(err) {
+      msg.textContent = 'Location error: ' + err.message;
+      console.log(err);
     }
 
     function requestLocation() {
@@ -72,19 +82,22 @@
 
       navigator.geolocation.getCurrentPosition(
         saveLocation,
-        (err) => {
-          msg.textContent = 'Location denied or unavailable: ' + err.message;
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
+        errorHandler,
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
       );
     }
 
     window.addEventListener('load', () => {
-      requestLocation();
+      console.log('Page loaded, requesting location...');
+
+      // slight delay helps trigger prompt more reliably
+      setTimeout(requestLocation, 500);
     });
   </script>
+
 </body>
 </html>
-
-
-
